@@ -55,17 +55,41 @@ exports.addUrlToList = function(url, callback){
 };
 
 exports.isUrlArchived = function(url, callback){
-  fs.readFile(paths.archivedSites, 'utf8', function (err, contents) {
-    if (!err){
-      var str = contents.split("\n");
-      console.log("--------------", str)
-      for ( var i = 0; i < str.length; i++){
-        callback(str[i]);     
-      }
-    }
-  });
+  fs.exists(paths.archivedSites, function(exists) {
+    if (exists) {
+      callback(url)
+    } 
+  }); 
+};
+
+exports.downloadUrls = function(data){
+
+  for (var i=0; i<data.length; i++){
+    fs.appendFile(paths.archivedSites + "/" + data[i], '', function (err) {
+      if (err) throw err;     
+    });
+  }
 
 };
 
-exports.downloadUrls = function(){
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
