@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 var archive = require('../helpers/archive-helpers');
-
+var urlParser = require('url');
 
 exports.headers = headers = {
   "access-control-allow-origin": "*",
@@ -16,45 +16,68 @@ exports.sendResponse = sendResponse = function(response, data, statusCode){
   response.end(data);
 };
 
+exports.send404 = send404 = function (response){
+  sendResponse(response, '404: Page not Found', 404)
+}
+
+
 exports.serveAssets = serveAssets = function(response, asset, callback) {
-  fs.readFile(asset, 'utf8', function (err, contents) {
+
+  fs.readFile( archive.paths.siteAssets + asset, 'utf8', function (err, contents) {
     if (err){
-      throw err
+      fs.readFile( archive.paths.archivedSites + asset, 'utf8', function(err, contents){
+        if (err){
+          callback ? callback() : send404(response)
+        } else {
+          sendResponse(response, contents);
+        }        
+      });
     } else {
-      sendResponse(response, contents);
+      sendResponse(response, contents); 
     }
   });
 };
 
-exports.checkForFile = checkForFile = function (response, file){
- fs.exists(file, function(exists) {
-      if (exists) {
-        serveAssets( response, file );
-        // serve file
-      } else {
-        sendResponse(response, '', 404);
-      }
-    }); 
-}
-  
+// exports.checkForFile = checkForFile = function (response, file){
+//  fs.exists(file, function(exists) {
+//       if (exists) {
+//         serveAssets( response, file );
+//         // serve file
+//       } else {
+//         sendResponse(response, '', 404);
+//       }
+//     }); 
+// }
+
+
+
 exports.actions = {
   'GET': function (request, response){
-    if (request.url === "/"){
-      serveAssets( response, archive.paths.indexPath );
-    } else {
-      var file = archive.paths.archivedSites + request.url;
-      checkForFile(response, file);
-    }
+    var parts = urlParser.parse(request.url);
+    // console.log(path)
+    var urlPath = parts.pathname === "/" ? "/index.html" : parts.pathname
+    // if (request.url === "/"){
+      console.log("akljshdflkjansd", urlPath)
+      serveAssets( response, urlPath );
+    // } 
+    // else {
+    //   var file = archive.paths.archivedSites + request.url;
+    //   checkForFile(response, file);
+    // }
 
   },
 
   'POST': function (request, response){
     var data ='';
+
     request.on("data", function (dataChunk) {
       data = JSON.parse(dataChunk);
+      // data = dataChunk;
+      console.log(data)
     })
 
     request.on("end", function () {
+      console.log(data)
       fs.writeFile(archive.paths.list, data.url + "\n", function (err) {
         if (err) {
           throw err
