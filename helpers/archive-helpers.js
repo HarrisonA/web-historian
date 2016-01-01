@@ -29,7 +29,7 @@ exports.initialize = function(pathsObj){
 exports.readListOfUrls = function(callback){
   fs.readFile(paths.list, 'utf8', function (err, contents) {
     if (!err){
-      var str = contents.split("\n");
+      var str = contents.toString().split("\n");
       callback(str);
     }
   });
@@ -37,17 +37,22 @@ exports.readListOfUrls = function(callback){
 
 exports.isUrlInList = function(url, callback){
   fs.readFile(paths.list, 'utf8', function (err, contents) {
+    var found = false; 
     if (!err){
-      var str = contents.split("\n");
-      for ( var i = 0; i < str.length; i++){
-        callback(str[i]);     
+      var sites = contents.split("\n");
+      for ( var i = 0; i < sites.length; i++){
+        if (sites[i] === url){
+          found = true
+          break; 
+        }
       }
+        callback(found);     
     }
   });
 };
 
 exports.addUrlToList = function(url, callback){
-  fs.writeFile(paths.list, url, function (err) {
+  fs.appendFile(paths.list, url + "\n", function (err) {
     if (!err) {
       callback(url);
     };
@@ -55,15 +60,18 @@ exports.addUrlToList = function(url, callback){
 };
 
 exports.isUrlArchived = function(url, callback){
-  fs.exists(paths.archivedSites, function(exists) {
+  console.log("+++++++++++++++++++",paths.archivedSites + "/" +url)
+  fs.exists(paths.archivedSites + "/" +url, function(exists) {
     if (exists) {
-      callback(url)
+      callback(true);
+    } else {
+      callback(false);
     } 
   }); 
 };
 
 exports.downloadUrls = function(data){
-
+    console.log("Download urls ", data)
   for (var i=0; i<data.length; i++){
     fs.appendFile(paths.archivedSites + "/" + data[i], '', function (err) {
       if (err) throw err;     

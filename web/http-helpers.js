@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 var archive = require('../helpers/archive-helpers');
-var urlParser = require('url');
+
 
 exports.headers = headers = {
   "access-control-allow-origin": "*",
@@ -48,42 +48,31 @@ exports.serveAssets = serveAssets = function(response, asset, callback) {
 //       }
 //     }); 
 // }
-
-
-
-exports.actions = {
-  'GET': function (request, response){
-    var parts = urlParser.parse(request.url);
-    // console.log(path)
-    var urlPath = parts.pathname === "/" ? "/index.html" : parts.pathname
-    // if (request.url === "/"){
-      console.log("akljshdflkjansd", urlPath)
-      serveAssets( response, urlPath );
-    // } 
-    // else {
-    //   var file = archive.paths.archivedSites + request.url;
-    //   checkForFile(response, file);
-    // }
-
-  },
-
-  'POST': function (request, response){
-    var data ='';
+exports.collectData = function (request, callback) {
+   var data ='';
 
     request.on("data", function (dataChunk) {
-      data = JSON.parse(dataChunk);
+      data += dataChunk;
       // data = dataChunk;
-      console.log(data)
+      console.log("_________________", data)
     })
 
     request.on("end", function () {
-      console.log(data)
-      fs.writeFile(archive.paths.list, data.url + "\n", function (err) {
-        if (err) {
-          throw err
-        };
-      });      
-      sendResponse(response, '', 302);
+      callback(data)
+      // console.log(data)
+      // fs.writeFile(archive.paths.list, data.url + "\n", function (err) {
+      //   if (err) {
+      //     throw err
+      //   };
+      // });      
+      // sendResponse(response, '', 302);
     });
-  }
+}
+
+exports.sendRedirect = function(response, location, status){
+  status = status || 302;
+  response.writeHead(status, {Location: location});
+  response.end();
 };
+
+
